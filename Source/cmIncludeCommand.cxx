@@ -23,7 +23,9 @@ bool cmIncludeCommand::InitialPass(std::vector<std::string> const& args,
   }
   bool optional = false;
   bool noPolicyScope = false;
-  std::string fname = args[0];
+  bool argIsString = False;
+  std::string data = args[0];
+  std::string fname;
   std::string resultVarName;
 
   for (unsigned int i = 1; i < args.size(); i++) {
@@ -47,6 +49,8 @@ bool cmIncludeCommand::InitialPass(std::vector<std::string> const& args,
       }
     } else if (args[i] == "NO_POLICY_SCOPE") {
       noPolicyScope = true;
+    } else if (args[i] == "STRING") {
+      argIsString = true;
     } else if (i > 1) // compat.: in previous cmake versions the second
                       // parameter was ignored if it wasn't "OPTIONAL"
     {
@@ -57,12 +61,14 @@ bool cmIncludeCommand::InitialPass(std::vector<std::string> const& args,
     }
   }
 
-  if (fname.empty()) {
+  if (data.empty()) {
     this->Makefile->IssueMessage(cmake::AUTHOR_WARNING,
                                  "include() given empty file name (ignored).");
     return true;
   }
 
+  if( not argIsString ) {
+  fname = data;
   if (!cmSystemTools::FileIsFullPath(fname)) {
     // Not a path. Maybe module.
     std::string module = fname;
@@ -71,7 +77,6 @@ bool cmIncludeCommand::InitialPass(std::vector<std::string> const& args,
     if (!mfile.empty()) {
       fname = mfile;
     }
-  }
 
   std::string fname_abs = cmSystemTools::CollapseFullPath(
     fname, this->Makefile->GetCurrentSourceDirectory());
@@ -118,6 +123,10 @@ bool cmIncludeCommand::InitialPass(std::vector<std::string> const& args,
       this->Makefile->AddDefinition(resultVarName, "NOTFOUND");
     }
     return true;
+  }
+ 
+  } else { 
+    std::string listFile = data;
   }
 
   bool readit =
